@@ -1,0 +1,25 @@
+.page-sub-heading {
+    font-size: larger;
+    font-weight: bolder;
+    margin-top: 60px;
+    margin-bottom: 30px;
+}
+
+ion-list {
+    margin-bottom: 30px;
+}
+
+.page-buttonbar {
+    margin-top: 30px;
+}
+
+.profile {
+    margin-top: 20px;
+    width: 100%;
+}
+
+.gender_label {
+    font-size: 12px;
+    padding-left: 16px;
+    padding-bottom: 16px;
+}

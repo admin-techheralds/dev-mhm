@@ -1,0 +1,7 @@
+{
+  "name": "myhealthmonitor",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react"
+}
