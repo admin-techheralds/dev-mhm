@@ -1,0 +1,31 @@
+
+ion-card {
+  border-radius: 0px;
+  margin-left: 0px;
+  margin-right: 0px;
+  margin-top: 0px;
+  margin-bottom: 0px;
+  
+}
+
+
+ion-item {
+  background-color: #FFFFFF;
+  /* margin-bottom: 20px; */
+}
+
+.appointmentdate {
+  font-size: xx-large !important;
+  color: red !important;
+}
+
+.alignVertical {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  height: 100%;
+}
+
+.appointmenteDetailsIcon {
+  color : red
+}

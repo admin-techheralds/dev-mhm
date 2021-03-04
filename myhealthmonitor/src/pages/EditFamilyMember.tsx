@@ -51,13 +51,13 @@ import { ALERT_SHOW_DURATION_MS } from './../env'
 import { FamilyMemberDetails } from './../models'
 
 interface RouteParams {
-  selected_name : string;
+  id : string;
 }
 
 const EditFamilyMember: React.FC = ( ) => {
 
 
-  const { selected_name } = useParams<RouteParams>();
+  const { id } = useParams<RouteParams>();
   const history = useHistory();
 
   // const { name } = useParams<{ name: string; }>();
@@ -83,7 +83,7 @@ const EditFamilyMember: React.FC = ( ) => {
   const getFamilyMemberDetailsByName = function(members:any) : FamilyMemberDetails {
     var details = undefined;
     for(var i = 0; i < members.length; i++) {
-      if(members[i].name == selected_name) {
+      if(members[i].id == id) {
         details = members[i] as FamilyMemberDetails;
         break;
       }
@@ -91,8 +91,8 @@ const EditFamilyMember: React.FC = ( ) => {
     return details!;
   }
 
-  const saveProfilePicture = async function(userid:string, name:string, pictURL:string) {
-    const picRef = storage.ref(`Users/${userid}/profile_pic/${name}`);
+  const saveProfilePicture = async function(userid:string, id:string, pictURL:string) {
+    const picRef = storage.ref(`Users/${userid}/profile_pic/${id}`);
     const picResponse = await fetch(pictURL);
     const picBlob = await picResponse.blob();
     const snapshot = await picRef.put(picBlob);
@@ -101,9 +101,9 @@ const EditFamilyMember: React.FC = ( ) => {
     return url;
   }
 
-  const deleteProfilePicture = async function(userid:string, name:string) {
+  const deleteProfilePicture = async function(userid:string, id:string) {
     try {
-      const picRef = storage.ref(`Users/${userid}/profile_pic/${name}`);
+      const picRef = storage.ref(`Users/${userid}/profile_pic/${id}`);
       const result = await picRef.delete();
       console.log('Delete Response is', result);
       return true;
@@ -163,7 +163,7 @@ const EditFamilyMember: React.FC = ( ) => {
     var index = -1;
     for(var i = 0; i < familyMembersList!.length; i++ ) {
       var member = familyMembersList![i];
-      if(member.name == selected_name) {
+      if(member.id == id) {
         index = i;
         break;
       }
@@ -174,7 +174,7 @@ const EditFamilyMember: React.FC = ( ) => {
     }
 
     setDataLoading(true)
-    const result = await deleteProfilePicture(userId!, selected_name);
+    const result = await deleteProfilePicture(userId!, id);
 
     console.log('After rmeoving the member, remaining items', familyMembersList);
     db.ref(`Users/${userId}/family_members`).set(familyMembersList).then(() => {
@@ -193,17 +193,30 @@ const EditFamilyMember: React.FC = ( ) => {
     
   }
 
-  const checkNameAlreadyExists = function() {
-    var exists = false;
+  const getNameCount = function() {
+    var count = 0;
     for(var i = 0; i < familyMembersList!.length; i++ ) {
       var member = familyMembersList![i];
-      if(member.name == name && name != selected_name) {
-        exists = true;
-        break;
+      console.log('Comparing:' + member.name + ' with' + name)
+      if(member.id != id && member.name == name) {
+        count = count + 1;
       }
     }
-    return exists;
+    console.log("Name count", count);
+    return count;
   }
+
+  // const checkNameAlreadyExists = function() {
+  //   var exists = false;
+  //   for(var i = 0; i < familyMembersList!.length; i++ ) {
+  //     var member = familyMembersList![i];
+  //     if(member.name == name && name != selected_name) {
+  //       exists = true;
+  //       break;
+  //     }
+  //   }
+  //   return exists;
+  // }
 
   const handleFileSelection = async (event: React.ChangeEvent<HTMLInputElement>) => {
 
@@ -232,7 +245,7 @@ const EditFamilyMember: React.FC = ( ) => {
       return;
     }
 
-    if(checkNameAlreadyExists()) {
+    if(getNameCount() >= 1) {
       setError("Family member with the given name already exists");
       return;
     }
@@ -240,17 +253,18 @@ const EditFamilyMember: React.FC = ( ) => {
     setDataLoading(true);
     for(var i = 0; i < familyMembersList!.length; i++ ) {
       var member:FamilyMemberDetails = familyMembersList![i];
-      if( member!.name == selected_name) {
+      if( member!.id == id) {
     
         member = {
+          id : id,
           name : name,
           dob : dob,
           gender : gender,
           profile_pic : profile
         }
         if(profileModified) {
-          const result = await deleteProfilePicture(userId!, selected_name);
-          const profile_pic_url = await saveProfilePicture(userId!, name, profile);
+          const result = await deleteProfilePicture(userId!, id);
+          const profile_pic_url = await saveProfilePicture(userId!, id, profile);
           member['profile_pic'] = profile_pic_url
         }
         familyMembersList![i] = member as FamilyMemberDetails
@@ -300,7 +314,7 @@ const EditFamilyMember: React.FC = ( ) => {
         </IonGrid>
         <IonList lines="inset">
           <IonItem lines="inset">
-            <IonLabel position="fixed">Name</IonLabel>
+            <IonLabel position="stacked">Name</IonLabel>
             <IonInput value={name} type="text" 
               onIonChange={(event) => {
                   setName(event.detail.value as string) 
@@ -308,7 +322,7 @@ const EditFamilyMember: React.FC = ( ) => {
               }  />
           </IonItem>   
           <IonItem lines="inset">
-            <IonLabel position="fixed">Date of Birth:</IonLabel>
+            <IonLabel position="stacked">Date of Birth:</IonLabel>
             <IonDatetime displayFormat="DD/MMM/YYYY" 
               value = {dob}
               onIonChange={ (event) => { 
@@ -317,8 +331,8 @@ const EditFamilyMember: React.FC = ( ) => {
             ></IonDatetime>
           </IonItem>
 
+          <IonLabel class="gender_label">Gender</IonLabel>
           <IonItem lines="inset">
-            <IonLabel position="fixed">Gender:</IonLabel>
             <IonSegment value={gender} onIonChange={ e => {
                   setGender(e.detail.value as string)
               }
@@ -350,7 +364,7 @@ const EditFamilyMember: React.FC = ( ) => {
           isOpen={showConfirmation}
           onDidDismiss={() => setShowConfirmation(false)}
           header={'Confirm ?'}
-          message={`Do you want to delete <strong>${selected_name}</strong>!!!`}
+          message={`Do you want to delete this user ?</strong>!!!`}
           buttons={[
             {
               text: 'Cancel',

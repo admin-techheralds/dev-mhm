@@ -12,7 +12,7 @@ const NoFamilyMemberCard: React.FC = () => {
   
     return (
         <IonCard color="danger">
-            <IonCardContent>
+            <IonCardContent class="ion-padding">
                 <IonLabel>Family members are not added yet. Click + to add a member</IonLabel>
             </IonCardContent>
         </IonCard>

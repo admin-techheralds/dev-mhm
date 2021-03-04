@@ -16,6 +16,8 @@ import {
   IonPicker, 
   IonPickerColumn, 
   IonRow, 
+  IonSegment, 
+  IonSegmentButton, 
   IonSelect, 
   IonSelectOption, 
   IonTextarea, 
@@ -30,7 +32,7 @@ import {
  } from '@ionic/react';
 import React, { useEffect, useState } from 'react';
 import { Redirect, useHistory, useParams } from 'react-router';
-import './NewMedicalAppointment.css';
+import './EditMedicalAppointment.css';
 import { useAuth, useAuthInit } from './../auth'
 import { auth as firebaseAuth } from './../firebase';
 import { 
@@ -50,12 +52,17 @@ import { ALERT_SHOW_DURATION_MS } from './../env'
 import { db } from './../firebase'
 import dayjs from 'dayjs'
 import { v4 as uuidv4 } from 'uuid'
+import { DoctorAppointment } from '../models';
 
-const NewMedicalAppointment : React.FC = ( ) => {
+interface EditMedicalAppointmentParams {
+  id : string;
+}
+const EditMedicalAppointment : React.FC = () => {
 
   const history = useHistory();
 
-  const { name } = useParams<{ name: string; }>();
+  const { id } = useParams<EditMedicalAppointmentParams>();
+
   const { loggedIn, userId } = useAuth();
   const { loading, auth } = useAuthInit();
 
@@ -75,11 +82,15 @@ const NewMedicalAppointment : React.FC = ( ) => {
   const [ appointmentSlot, setAppointmentSlot] = useState<string>('');
   const [ appointmentStatus, setAppointmentStatus] = useState<string>('');
   const [ appointmentDetails, setAppointmentDetails ] = useState<string>('');
+
+  const [ selectedAppointment, setSelectedAppointment] = useState<DoctorAppointment>();
   
   useEffect( () => {
     const user_ref = db.ref(`Users/${userId}`);
     user_ref.get().then((docs)=> {
       const user_details = docs.val();
+      var family_member_list_local:any = [];
+
       var family_members = user_details['family_members'];
       const owner = {
         name : user_details.name,
@@ -90,11 +101,16 @@ const NewMedicalAppointment : React.FC = ( ) => {
       }; 
       setOwner( owner)
       if(family_members != undefined) {
-        family_members.push(owner);
+        family_members.forEach(function(m:any) {
+          family_member_list_local.push(m);
+        })
+        family_member_list_local.push(owner);
         setFamilyMembersList(family_members);
       } else {
-        setFamilyMembersList([ owner ]);
+        family_member_list_local.push(owner)
       }
+      setFamilyMembersList(family_member_list_local);
+
       const doctors_ref = db.ref(`Doctors/`);
       doctors_ref.get().then((docs)=> {
         setDataLoading(false)
@@ -103,9 +119,43 @@ const NewMedicalAppointment : React.FC = ( ) => {
           doctors_list.push(doctor.val())
         });
         setDoctorsList(doctors_list);
+        var appointments = user_details['doctor_appointments'];
+        const keys = Object.keys(appointments);
+        for(var i = 0; i < keys.length; i++) {
+          const k = keys[i];
+          if(k == id) {
+            const appt = appointments[k] as DoctorAppointment;
+            setFamilyMember(appt.name);
+            setSelectedDoctor(appt.doctor);
+            setAppointmentDate(appt.appointment_date);
+            setAppointmentSlot(appt.appointment_slot);
+            setAppointmentStatus(appt.status);
+            setAppointmentDetails(appt.appointment_details);
+            appt.family_member_details = getItemDetailsById(family_member_list_local, appt.name)
+            appt.doctor_details = getItemDetailsById(doctors_list, appt.doctor)
+
+            setSelectedAppointment(appt);
+            break;
+          }
+        }
       }); // end of doctors
     }); //end of users
   }, [ userId ]);
+
+  const getItemDetailsById = function(members:any, id:string) {
+    var selected_member = undefined;
+    if(members == undefined) {
+      return selected_member;
+    }
+    for(var i = 0; i < members!.length; i++) {
+      const member = members[i];
+      if(member['id'] == id) {
+        selected_member = member;
+        break;
+      }
+    }
+    return selected_member;
+  }
 
   useEffect( () => {
     console.log('Doctor value changed to:', selectedDoctor);
@@ -153,9 +203,9 @@ const NewMedicalAppointment : React.FC = ( ) => {
     return <Redirect to="/my/doctorappointments/list" />
   }
 
-  const addDoctorAppointment = () => {
+  const editDoctorAppointment = () => {
     setError('')
-    console.log("Adding appointment...");
+    console.log("Editing appointment...");
     if(familyMember.trim().length <= 0) {
       setError('Family member cannot be empty');
       return;
@@ -185,7 +235,6 @@ const NewMedicalAppointment : React.FC = ( ) => {
     }
 
     setDataLoading(true);
-    const id =  uuidv4();
 
     const appointment_ref = db.ref(`Users/${userId}/doctor_appointments/${id}`);
     appointment_ref.set({
@@ -194,23 +243,23 @@ const NewMedicalAppointment : React.FC = ( ) => {
       doctor: selectedDoctor,
       appointment_date : appointmentDate,
       appointment_slot : appointmentSlot,
-      status : 'Created',
+      status : appointmentStatus,
       appointment_details : appointmentDetails
     }).then(()=>{
       setDataLoading(false);
-      setStatus("Successfully booked the appointment...");
+      setStatus("Successfully edited the appointment...");
       setTimeout(function() {
           history.push('/my/doctorappointments/list');
       }, ALERT_SHOW_DURATION_MS + 500) //allow the success status msg to be displayed  
     }).catch((ex) => {
       setDataLoading(false);
-      console.log('Error while booking the doctor appointment', ex)
-      setError('Error while booking the doctor appointment');
+      console.log('Error while editing the doctor appointment', ex)
+      setError('Error while editing the doctor appointment');
     });
   }
 
   if(! loggedIn) {
-    console.log('Me in New Device. But flag is:', loggedIn)
+    console.log('Me in Edit Medical appointment page. But flag is:', loggedIn)
     return <Redirect to="/login" />
   }
   return (
@@ -230,7 +279,7 @@ const NewMedicalAppointment : React.FC = ( ) => {
         <IonGrid>
           <IonRow>
             <IonCol className="ion-text-center">
-              <IonLabel className="page-sub-heading">Book Appointment</IonLabel>
+              <IonLabel className="page-sub-heading">Edit Appointment</IonLabel>
             </IonCol>
           </IonRow>
         </IonGrid>
@@ -302,13 +351,17 @@ const NewMedicalAppointment : React.FC = ( ) => {
             </IonSelect>
           </IonItem>
           <IonItem lines="inset">
+            <IonLabel >Status</IonLabel>
+            <IonLabel slot="end" class="ion-text-uppercase ion-float-right" id="edit_appointment_status_value" color="primary">{appointmentStatus}</IonLabel>
+          </IonItem>
+          <IonItem lines="inset">
             <IonLabel position="stacked">Details</IonLabel>
             <IonTextarea placeholder="Description for appointment such as: fever, cough...etc" value={appointmentDetails} 
               onIonChange={e => setAppointmentDetails(e.detail.value!)}></IonTextarea>
           </IonItem>
         </IonList>
         <div className="page-buttonbar ion-text-center">
-          <IonButton color="success" onClick={addDoctorAppointment}>Book</IonButton>
+          <IonButton color="success" onClick={editDoctorAppointment}>Save</IonButton>
           <IonButton color="light" routerLink="/my/doctorappointments/list">Cancel</IonButton>
         </div>
         <IonToast
@@ -343,4 +396,4 @@ const NewMedicalAppointment : React.FC = ( ) => {
   );
 };
 
-export default NewMedicalAppointment;
+export default EditMedicalAppointment;

@@ -58,7 +58,7 @@ const FamilyPage: React.FC = ( ) => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent class="ion-padding" color="light">
+      <IonContent color="light">
         {/* <IonList color="dark"> */}
 
         {

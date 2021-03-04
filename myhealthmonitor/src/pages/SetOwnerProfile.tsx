@@ -34,7 +34,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {  Redirect, useParams } from 'react-router';
 import './SetOwnerProfile.css';
 import { useAuth, useAuthInit } from './../auth'
-import { auth as firebaseAuth } from './../firebase';
+import { auth as firebaseAuth, storage } from './../firebase';
 import { 
 
   arrowBackOutline,
@@ -46,15 +46,20 @@ import {
 import { useHistory } from "react-router-dom";
 import { APP_NAME } from './../env'
 
-import dayjs from 'dayjs'
-
 import { ALERT_SHOW_DURATION_MS } from './../env'
 import { db } from './../firebase'
+import dayjs from 'dayjs'
+import { v4 as uuidv4 } from 'uuid'
+
 interface RouteParams {
   id : string;
 }
 
-const SetOwnerProfile: React.FC = ( ) => {
+interface SetProfileInterfaceProps {
+  setProfileData: Function;
+}
+
+const SetOwnerProfile: React.FC<SetProfileInterfaceProps> = ( { setProfileData } ) => {
 
 
   const { id } = useParams<RouteParams>();
@@ -71,6 +76,7 @@ const SetOwnerProfile: React.FC = ( ) => {
   const [ dob, setDOB] = useState<string>('');
   const [ gender, setGender] = useState<string>("F");
   const [ profile, setProfile] = useState<string>("/assets/placeholder_profile.png");
+  const [ dataHandling, setDataLoading] = useState<boolean>(false);
 
   const inputImageFileElementRef = useRef<HTMLInputElement>(null);
   const inputNameElementRef = useRef<HTMLIonInputElement>(null);
@@ -95,13 +101,24 @@ const SetOwnerProfile: React.FC = ( ) => {
         URL.revokeObjectURL(profile)
       }
     }
-  }, [])
+  }, [ profile ])
 
   if(auth?.userData != undefined) {
     console.log('User data is defined.. Redirect to landing page');
     return <Redirect to="/my/landing" />
   }
   
+
+  const saveProfilePicture = async function(userid:string, id:string, pictURL:string) {
+    const picRef = storage.ref(`Users/${userid}/profile_pic/${id}`);
+    const picResponse = await fetch(pictURL);
+    const picBlob = await picResponse.blob();
+    const snapshot = await picRef.put(picBlob);
+    const url = await snapshot.ref.getDownloadURL();
+    console.log('Uploaded image url:', url);
+    return url;
+  }
+
   const handleFileSelection = async (event: React.ChangeEvent<HTMLInputElement>) => {
 
     if(event.target.files!.length > 0) {
@@ -117,29 +134,47 @@ const SetOwnerProfile: React.FC = ( ) => {
     console.log("saving the profile owner...");
     if(name.trim().length <= 0) {
       setError('Name cannot be empty');
-      inputNameElementRef.current?.focus();
       return;
     }
     if(dob.trim().length <= 0) {
       setError('Date of Birth cannot be empty');
       return;
     }
-    if(profile.trim().length <= 0) {
-      setError('Profile cannot be empty');
+    const now = dayjs();
+    const selectedDOB = dayjs(dob);
+    if(! selectedDOB.isBefore(now, "days")) {
+      setError('Date Of Birth has to be in past');
       return;
     }
+
+    if(! profile.trim().startsWith('blob')) {
+      setError('Profile picture found to be empty');
+      return;
+    }
+    setDataLoading(true);
+    const profile_pic_url = await saveProfilePicture(userId!, id, profile);
 
     db.ref('Users/' + id).set({
       name : name,
       dob : dob,
       gender: gender,
-      profile_pic: ""
+      profile_pic: profile_pic_url
     }).then(() => {
+      setDataLoading(false);
       setStatus("Successfully stored the profile data...");
+      //setting the profile data so that whn we redirect to other pages, it shall redirect this page
+      setProfileData({
+        name : name,
+        dob : dob,
+        gender: gender,
+        profile_pic: profile_pic_url
+      })
       setTimeout(function() {
         history.push('/my/family');
       }, ALERT_SHOW_DURATION_MS + 500) //allow the success status msg to be displayed  
     }).catch((ex) => {
+      setDataLoading(false);
+
       setError('Failed to save your profile. Contact System Administrator');
       return;
     });
@@ -172,7 +207,6 @@ const SetOwnerProfile: React.FC = ( ) => {
           <IonItem lines="inset">
             <IonLabel position="stacked">Name</IonLabel>
             <IonInput value={name} type="text" 
-              ref={inputNameElementRef}
               autofocus
               onIonChange={(event) => {
                   setName(event.detail.value as string); 
@@ -225,6 +259,9 @@ const SetOwnerProfile: React.FC = ( ) => {
           message={status}
           duration={ALERT_SHOW_DURATION_MS}
         />
+        {
+          dataHandling ? <IonLoading  isOpen /> : ""
+        }
       </IonContent>
     </IonPage>
   );

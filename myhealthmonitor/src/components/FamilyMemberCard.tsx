@@ -38,7 +38,7 @@ const FamilyMemberCard: React.FC<FamilyCardProps> = ({ member }) => {
     console.log('Loading family details:', member)
 
     return (
-        <IonCard routerLink={`/my/family/edit/${member.name}`}>
+        <IonCard routerLink={`/my/family/edit/${member.id}`}>
             <IonCardContent>
                 <IonItem lines="none">
                     <IonAvatar>

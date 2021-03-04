@@ -76,7 +76,7 @@ const LandingGridPage: React.FC = () => {
                     <IonCardSubtitle><IonIcon icon={documentTextSharp}></IonIcon>  Data</IonCardSubtitle>
                     <IonCardTitle>My Records</IonCardTitle>
                   </IonCardHeader>
-                  <IonCardContent>
+                  <IonCardContent class="ion-padding">
                     The medical records will be viewed here....
                   </IonCardContent>
                 </IonCard>
@@ -87,7 +87,7 @@ const LandingGridPage: React.FC = () => {
                     <IonCardSubtitle><IonIcon icon={thermometerSharp}></IonIcon> Devices</IonCardSubtitle>
                     <IonCardTitle>My Devices</IonCardTitle>
                   </IonCardHeader>
-                  <IonCardContent>
+                  <IonCardContent class="ion-padding">
                     List of medical devices configured to read the data...
                   </IonCardContent>
                 </IonCard>         
@@ -98,7 +98,7 @@ const LandingGridPage: React.FC = () => {
                     <IonCardSubtitle><IonIcon icon={peopleSharp}></IonIcon> Family</IonCardSubtitle>
                     <IonCardTitle>My Family</IonCardTitle>
                   </IonCardHeader>
-                  <IonCardContent>
+                  <IonCardContent class="ion-padding">
                     My family members. The members can be managed by clicking here...
                   </IonCardContent>
                 </IonCard>         
@@ -109,7 +109,7 @@ const LandingGridPage: React.FC = () => {
                     <IonCardSubtitle><IonIcon icon={calendarSharp}></IonIcon> Appointments</IonCardSubtitle>
                     <IonCardTitle>My Doctor Appointments</IonCardTitle>
                   </IonCardHeader>
-                  <IonCardContent>
+                  <IonCardContent  class="ion-padding">
                     List of doctor appointments that have been booked
                   </IonCardContent>
                 </IonCard>

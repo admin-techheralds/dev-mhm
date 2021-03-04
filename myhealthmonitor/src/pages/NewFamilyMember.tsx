@@ -49,6 +49,8 @@ import { useHistory } from "react-router-dom";
 import { ALERT_SHOW_DURATION_MS } from './../env'
 import { db } from './../firebase'
 import dayjs from 'dayjs'
+import { v4 as uuidv4 } from 'uuid'
+
 
 const NewFamilyMember: React.FC = ( ) => {
 
@@ -80,8 +82,8 @@ const NewFamilyMember: React.FC = ( ) => {
     return <Redirect to="/my/family" />
   }
 
-  const saveProfilePicture = async function(userid:string, name:string, pictURL:string) {
-    const picRef = storage.ref(`Users/${userid}/profile_pic/${name}`);
+  const saveProfilePicture = async function(userid:string, id:string, pictURL:string) {
+    const picRef = storage.ref(`Users/${userid}/profile_pic/${id}`);
     const picResponse = await fetch(pictURL);
     const picBlob = await picResponse.blob();
     const snapshot = await picRef.put(picBlob);
@@ -131,6 +133,12 @@ const NewFamilyMember: React.FC = ( ) => {
       setError('Date of Birth cannot be empty');
       return;
     }
+    const now = dayjs();
+    const selectedDOB = dayjs(dob);
+    if(! selectedDOB.isBefore(now, "days")) {
+      setError('Date Of Birth has to be in past');
+      return;
+    }
     if(! profile.trim().startsWith('blob')) {
       setError('Profile picture found to be empty');
       return;
@@ -149,8 +157,10 @@ const NewFamilyMember: React.FC = ( ) => {
           return;
         }
       }
-      const profile_pic_url = await saveProfilePicture(userId!, name, profile);
+      const id =  uuidv4();
+      const profile_pic_url = await saveProfilePicture(userId!, id, profile);
       family_members.push({
+        id: id,
         name : name,
         dob : dob,
         gender : gender,

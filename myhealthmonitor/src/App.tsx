@@ -18,7 +18,7 @@ import NewRecord from './pages/NewRecord'
 import NewFamilyMember from './pages/NewFamilyMember'
 
 import EditFamilyMember from './pages/EditFamilyMember'
-
+import EditMedicalAppointment from './pages/EditMedicalAppointment'
 import NewDevice from './pages/NewDevice'
 import NewMedicalAppointment from './pages/NewMedicalAppointment'
 
@@ -33,7 +33,7 @@ import { DataHandler } from './DataHandler'
 import { APP_VERSION, APP_NAME, APP_FOLDERS_FILES_CONFIG } from './env';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
-import { faMale, faFemale } from '@fortawesome/free-solid-svg-icons';
+import { faMale, faFemale, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { librarySharp } from 'ionicons/icons';
 
 import { db } from './firebase'
@@ -42,7 +42,7 @@ import RecordsPage from './pages/RecordsPage';
 
 // import { auth } from './firebase';
 
-library.add(faFemale, faMale)
+library.add(faFemale, faMale, faArrowRight)
 
 const App: React.FC = () => {
 
@@ -68,7 +68,6 @@ const App: React.FC = () => {
       }
       medicalRecords.init();
       //+ auth?.userId
-
     }
   }, [auth])
   if(loading) {
@@ -78,6 +77,10 @@ const App: React.FC = () => {
 
 
 
+  }
+
+  const setProfileData = (data:any) => {
+    auth!.userData = data;
   }
   
 
@@ -120,7 +123,7 @@ const App: React.FC = () => {
             <Route exact path="/my/family/list">
               <FamilyPage  />
             </Route>
-            <Route exact path="/my/family/edit/:selected_name">
+            <Route exact path="/my/family/edit/:id">
               <EditFamilyMember  />
             </Route>
             <Route exact path="/my/family/add">
@@ -140,9 +143,11 @@ const App: React.FC = () => {
             <Route exact path="/my/doctorappointments/add">
               <NewMedicalAppointment  />
             </Route>
-
+            <Route exact path="/my/doctorappointments/edit/:id">
+              <EditMedicalAppointment  />
+            </Route>
             <Route exact path="/my/ownerprofile/:id">
-              <SetOwnerProfile />
+              <SetOwnerProfile setProfileData={setProfileData} />
             </Route>
 
             <Route exact path="/filetest">
